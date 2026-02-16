@@ -3,11 +3,11 @@ import { PrismaClient } from '@prisma/client';
 const prisma = new PrismaClient();
 
 async function main() {
-  // Clear existing data
-  await prisma.song.deleteMany();
+  // Clear existing data (reverse-dependency order)
+  await prisma.listeningHistory.deleteMany();
   await prisma.playlist.deleteMany();
+  await prisma.song.deleteMany();
   await prisma.podcast.deleteMany();
-  await prisma.category.deleteMany();
   await prisma.artist.deleteMany();
   await prisma.user.deleteMany();
 
@@ -17,7 +17,8 @@ async function main() {
       email: 'user@spotify.com',
       name: 'My Profile',
       avatar: null,
-      bio: null
+      bio: null,
+      isPremium: false
     }
   });
 

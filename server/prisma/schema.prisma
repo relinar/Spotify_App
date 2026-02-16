@@ -1,90 +1,80 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
 generator client {
   provider = "prisma-client-js"
 }
 
 datasource db {
-  provider = "sqlite"
+  provider = "mysql"
   url      = env("DATABASE_URL")
 }
 
 model User {
-  id    Int     @id @default(autoincrement())
-  email String  @unique
-  name  String?
-  avatar String?
-  bio   String?
-  playlists Playlist[]
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  @@map("users")
+  id               Int                @id @default(autoincrement())
+  email            String             @unique
+  name             String?
+  avatar           String?
+  bio              String?
+  isPremium        Boolean            @default(false)
+  playlists        Playlist[]
+  favorites        Song[]             @relation("UserFavorites")
+  listeningHistory ListeningHistory[]
+  createdAt        DateTime           @default(now())
+  updatedAt        DateTime           @updatedAt
 }
 
 model Artist {
-  id    Int     @id @default(autoincrement())
-  name  String  @unique
-  bio   String?
-  image String?
-  songs Song[]
+  id        Int      @id @default(autoincrement())
+  name      String   @unique
+  bio       String?
+  image     String?
+  songs     Song[]
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-
-  @@map("artists")
 }
 
 model Song {
-  id        Int     @id @default(autoincrement())
-  title     String
-  duration  Int     // in seconds
-  genre     String?
-  image     String?
-  artistId  Int
-  artist    Artist  @relation(fields: [artistId], references: [id], onDelete: Cascade)
-  playlist  Playlist? @relation(fields: [playlistId], references: [id], onDelete: SetNull)
-  playlistId Int?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  @@map("songs")
-}
-
-model Podcast {
-  id        Int     @id @default(autoincrement())
-  title     String
-  description String?
-  duration  Int     // in seconds
-  category  String?
-  image     String?
-  host      String?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  @@map("podcasts")
+  id               Int                @id @default(autoincrement())
+  title            String
+  duration         Int
+  genre            String?
+  image            String?
+  artistId         Int
+  artist           Artist             @relation(fields: [artistId], references: [id], onDelete: Cascade)
+  playlists        Playlist[]         @relation("PlaylistSongs")
+  favoredBy        User[]             @relation("UserFavorites")
+  listeningHistory ListeningHistory[]
+  createdAt        DateTime           @default(now())
+  updatedAt        DateTime           @updatedAt
 }
 
 model Playlist {
-  id          Int     @id @default(autoincrement())
+  id          Int      @id @default(autoincrement())
   name        String
   description String?
   image       String?
   userId      Int
-  user        User    @relation(fields: [userId], references: [id], onDelete: Cascade)
-  songs       Song[]
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  songs       Song[]   @relation("PlaylistSongs")
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
-
-  @@map("playlists")
 }
 
-model Category {
-  id    Int     @id @default(autoincrement())
-  name  String  @unique
-  icon  String?
-  image String?
-  createdAt DateTime @default(now())
+model Podcast {
+  id          Int      @id @default(autoincrement())
+  title       String
+  description String?
+  duration    Int
+  category    String?
+  image       String?
+  host        String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
 
-  @@map("categories")
+model ListeningHistory {
+  id       Int      @id @default(autoincrement())
+  userId   Int
+  songId   Int
+  playedAt DateTime @default(now())
+  user     User     @relation(fields: [userId], references: [id])
+  song     Song     @relation(fields: [songId], references: [id])
 }

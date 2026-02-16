@@ -2,7 +2,7 @@
   <nav class="navbar">
     <div class="navbar-left">
       <div class="spotify-logo">
-        <span class="logo-icon">🎵</span>
+        <img src="http://localhost:3000/spotifylogo.png" alt="Spotify Logo" />
       </div>
       <button class="nav-button" title="Home">
         <span>🏠</span>
@@ -106,12 +106,19 @@ export default {
 }
 
 .spotify-logo {
-  font-size: 1.5rem;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   cursor: pointer;
 }
 
-.logo-icon {
-  color: #1db954;
+.spotify-logo img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  filter: saturate(1) brightness(1);
 }
 
 .nav-button {

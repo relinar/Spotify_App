@@ -12,6 +12,8 @@ const PORT = process.env.PORT || 3000;
 // Middleware
 app.use(cors());
 app.use(express.json());
+// Serve static files from the public directory (e.g. spotifylogo.png)
+app.use(express.static('public'));
 
 app.get('/api/health', (req, res) => {
   res.json({ status: 'Server is running' });
