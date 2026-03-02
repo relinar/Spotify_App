@@ -1,227 +1,170 @@
 <template>
-  <div class="app-container">
-    <Navbar 
-      :current-song="currentSong"
-      :user-profile="userProfile"
-      :categories="categories"
-      @search="handleSearch"
-      @category-select="handleCategorySelect"
-    />
-    
-    <div class="app-layout">
-      <Sidebar
-        :playlists="userPlaylists"
-        :selected-playlist="selectedPlaylist"
-        @playlist-select="selectPlaylist"
-        @playlist-create="createPlaylist"
-      />
-      
-      <MainContent
-        :songs="displaySongs"
-        :podcasts="displayPodcasts"
-        :loading="loading"
-        @play-item="playSong"
-      />
+  <div class="app">
+
+    <aside class="sidebar" :class="{ open: mobileMenu }">
+      <div class="logo">Spotify</div>
+
+      <div class="nav">
+        <button class="nav-btn active">Home</button>
+        <button class="nav-btn">Search</button>
+        <button class="nav-btn">Your Library</button>
+      </div>
+    </aside>
+
+    <div class="main">
+
+      <header class="topbar">
+        <button class="mobile-menu" @click="mobileMenu = !mobileMenu">☰</button>
+        <input class="search" placeholder="What do you want to listen to?" />
+      </header>
+
+      <main class="content">
+        <HomeView @play="play" />
+      </main>
+
     </div>
+
+    <PlayerBar :song="currentSong" />
+
   </div>
 </template>
 
-<script>
-import { ref, onMounted, computed } from 'vue'
-import axios from 'axios'
-import Navbar from './components/Navbar.vue'
-import Sidebar from './components/Sidebar.vue'
-import MainContent from './components/MainContent.vue'
+<script setup>
+import { ref } from 'vue'
+import HomeView from './views/HomeView.vue'
+import PlayerBar from './components/PlayerBar.vue'
 
-export default {
-  name: 'App',
-  components: {
-    Navbar,
-    Sidebar,
-    MainContent
-  },
-  setup() {
-    const loading = ref(true)
-    const songs = ref([])
-    const podcasts = ref([])
-    const userPlaylists = ref([])
-    const categories = ref([])
-    const userProfile = ref(null)
-    const currentSong = ref(null)
-    const selectedPlaylist = ref(null)
-    const searchQuery = ref('')
+const currentSong = ref(null)
+const mobileMenu = ref(false)
 
-    const api = axios.create({
-      baseURL: 'http://localhost:3000/api'
-    })
-
-    // Computed properties for filtering
-    const displaySongs = computed(() => {
-      if (!searchQuery.value) return songs.value
-      return songs.value.filter(song =>
-        song.title.toLowerCase().includes(searchQuery.value.toLowerCase()) ||
-        song.artist?.name.toLowerCase().includes(searchQuery.value.toLowerCase())
-      )
-    })
-
-    const displayPodcasts = computed(() => {
-      if (!searchQuery.value) return podcasts.value
-      return podcasts.value.filter(podcast =>
-        podcast.title.toLowerCase().includes(searchQuery.value.toLowerCase())
-      )
-    })
-
-    // API calls
-    const fetchUserProfile = async () => {
-      try {
-        const response = await api.get('/user')
-        userProfile.value = response.data
-      } catch (error) {
-        console.error('Error fetching user:', error)
-      }
-    }
-
-    const fetchSongs = async () => {
-      try {
-        const response = await api.get('/songs')
-        songs.value = response.data
-      } catch (error) {
-        console.error('Error fetching songs:', error)
-      }
-    }
-
-    const fetchPodcasts = async () => {
-      try {
-        const response = await api.get('/podcasts')
-        podcasts.value = response.data
-      } catch (error) {
-        console.error('Error fetching podcasts:', error)
-      }
-    }
-
-    const fetchCategories = async () => {
-      try {
-        const response = await api.get('/categories')
-        categories.value = response.data
-      } catch (error) {
-        console.error('Error fetching categories:', error)
-      }
-    }
-
-    const fetchUserPlaylists = async () => {
-      try {
-        const userId = userProfile.value?.id || 1
-        const response = await api.get(`/user/${userId}/playlists`)
-        userPlaylists.value = response.data
-      } catch (error) {
-        console.error('Error fetching playlists:', error)
-      }
-    }
-
-    const selectPlaylist = (playlist) => {
-      selectedPlaylist.value = playlist
-    }
-
-    const createPlaylist = async (name) => {
-      try {
-        const response = await api.post('/playlists', {
-          name,
-          description: '',
-          userId: userProfile.value?.id || 1
-        })
-        userPlaylists.value.push(response.data)
-      } catch (error) {
-        console.error('Error creating playlist:', error)
-        alert('Failed to create playlist')
-      }
-    }
-
-    const playSong = (item) => {
-      currentSong.value = item
-    }
-
-    const handleSearch = (query) => {
-      searchQuery.value = query
-    }
-
-    const handleCategorySelect = (category) => {
-      console.log('Selected category:', category)
-      // Can implement category-specific filtering here
-      searchQuery.value = ''
-    }
-
-    const loadData = async () => {
-      loading.value = true
-      try {
-        await Promise.all([
-          fetchUserProfile(),
-          fetchSongs(),
-          fetchPodcasts(),
-          fetchCategories()
-        ])
-        // Fetch playlists after user is loaded
-        await fetchUserPlaylists()
-      } catch (error) {
-        console.error('Error loading data:', error)
-      } finally {
-        loading.value = false
-      }
-    }
-
-    onMounted(() => {
-      loadData()
-    })
-
-    return {
-      loading,
-      songs,
-      podcasts,
-      userPlaylists,
-      categories,
-      userProfile,
-      currentSong,
-      selectedPlaylist,
-      displaySongs,
-      displayPodcasts,
-      selectPlaylist,
-      createPlaylist,
-      playSong,
-      handleSearch,
-      handleCategorySelect
-    }
-  }
+function play(song){
+  currentSong.value = song
 }
 </script>
 
 <style>
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
+:root{
+  --bg-main:#121212;
+  --bg-sidebar:#000000;
+  --bg-card:#181818;
+  --bg-card-hover:#282828;
+  --bg-top:#101010;
+  --text-main:#ffffff;
+  --text-sub:#b3b3b3;
+  --spotify-green:#1db954;
 }
 
-html, body {
-  background: #0f0f0f;
-  color: white;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-  height: 100%;
+html,body,#app{
+  margin:0;
+  height:100%;
+  background:var(--bg-main);
+  font-family: system-ui,-apple-system,BlinkMacSystemFont,Segoe UI,Roboto;
 }
 
-#app {
-  height: 100vh;
+.app{
+  display:grid;
+  grid-template-columns: 240px 1fr;
+  grid-template-rows: 1fr 90px;
+  height:100vh;
 }
 
-.app-container {
-  display: flex;
-  flex-direction: column;
-  height: 100vh;
-  background: #0f0f0f;
+.sidebar{
+  background:var(--bg-sidebar);
+  color:var(--text-main);
+  padding:18px 12px;
 }
 
-.app-layout {
-  display: flex;
-  flex: 1;
-  overflow: hidden;
-  background: #0f0f0f;
+.logo{
+  font-weight:700;
+  font-size:20px;
+  margin-bottom:22px;
+}
+
+.nav{
+  display:flex;
+  flex-direction:column;
+  gap:6px;
+}
+
+.nav-btn{
+  background:none;
+  border:none;
+  color:var(--text-sub);
+  text-align:left;
+  padding:10px 12px;
+  border-radius:6px;
+  font-size:14px;
+  cursor:pointer;
+}
+
+.nav-btn.active,
+.nav-btn:hover{
+  color:var(--text-main);
+  background:#1a1a1a;
+}
+
+.main{
+  background:linear-gradient(180deg,#1f1f1f 0%, #121212 180px);
+  display:flex;
+  flex-direction:column;
+  overflow:hidden;
+}
+
+.topbar{
+  height:64px;
+  display:flex;
+  align-items:center;
+  gap:12px;
+  padding:0 20px;
+  background:var(--bg-top);
+}
+
+.search{
+  width:360px;
+  max-width:100%;
+  border-radius:500px;
+  border:none;
+  padding:10px 16px;
+  background:#242424;
+  color:white;
+  outline:none;
+}
+
+.content{
+  flex:1;
+  overflow:auto;
+  padding:24px;
+}
+
+.mobile-menu{
+  display:none;
+  background:none;
+  border:none;
+  color:white;
+  font-size:22px;
+}
+
+@media (max-width: 900px){
+  .app{
+    grid-template-columns: 1fr;
+  }
+
+  .sidebar{
+    position:fixed;
+    top:0;
+    left:-260px;
+    width:240px;
+    height:100%;
+    z-index:20;
+    transition:left .25s;
+  }
+
+  .sidebar.open{
+    left:0;
+  }
+
+  .mobile-menu{
+    display:block;
+  }
 }
 </style>

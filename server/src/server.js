@@ -1,147 +1,177 @@
-import express from 'express';
-import cors from 'cors';
-import dotenv from 'dotenv';
-import { PrismaClient } from '@prisma/client';
+import express from 'express'
+import cors from 'cors'
+import dotenv from 'dotenv'
+import { PrismaClient } from '@prisma/client'
 
-dotenv.config();
+dotenv.config()
 
-const app = express();
-const prisma = new PrismaClient();
-const PORT = process.env.PORT || 3000;
+const app = express()
+const prisma = new PrismaClient()
+const PORT = process.env.PORT || 3000
 
-// Middleware
-app.use(cors());
-app.use(express.json());
-// Serve static files from the public directory (e.g. spotifylogo.png)
-app.use(express.static('public'));
+app.use(cors())
+app.use(express.json())
+app.use(express.static('public'))
 
 app.get('/api/health', (req, res) => {
-  res.json({ status: 'Server is running' });
-});
+  res.json({ status: 'Server is running' })
+})
 
-// User routes
 app.get('/api/user', async (req, res) => {
   try {
     const user = await prisma.user.findFirst({
-      include: { playlists: true }
-    });
-    res.json(user || { id: 1, email: 'demo@spotify.com', name: 'Demo User' });
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-});
+      include: {
+        playlists: {
+          include: {
+            songs: {
+              include: {
+                artist: true
+              }
+            }
+          }
+        }
+      }
+    })
 
-// Categories routes
+    res.json(user || { id: 1, email: 'demo@spotify.com', name: 'Demo User' })
+  } catch (error) {
+    res.status(500).json({ error: error.message })
+  }
+})
+
 app.get('/api/categories', async (req, res) => {
   try {
-    const categories = await prisma.category.findMany();
-    res.json(categories);
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-});
+    // If the Prisma client doesn't have a Category model (schema mismatch),
+    // return an empty array so the frontend doesn't receive a 500.
+    if (!prisma.category || typeof prisma.category.findMany !== 'function') {
+      console.warn('Prisma client has no Category model; returning empty categories')
+      return res.json([])
+    }
 
-// Artists routes
+    const categories = await prisma.category.findMany()
+    res.json(categories)
+  } catch (error) {
+    console.error('[/api/categories] failed:', error)
+    res.status(500).json({ error: error.message })
+  }
+})
+
 app.get('/api/artists', async (req, res) => {
   try {
     const artists = await prisma.artist.findMany({
-      include: { songs: true }
-    });
-    res.json(artists);
+      include: {
+        songs: true
+      }
+    })
+    res.json(artists)
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    res.status(500).json({ error: error.message })
   }
-});
+})
 
-// Songs routes
 app.get('/api/songs', async (req, res) => {
   try {
     const songs = await prisma.song.findMany({
-      include: { artist: true, playlist: true }
-    });
-    res.json(songs);
+      include: {
+        artist: true,
+        playlists: true
+      }
+    })
+    res.json(songs)
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    console.error('[/api/songs] failed:', error)
+    res.status(500).json({ error: error.message })
   }
-});
+})
 
 app.get('/api/songs/:genre', async (req, res) => {
   try {
-    const { genre } = req.params;
+    const { genre } = req.params
     const songs = await prisma.song.findMany({
       where: { genre },
       include: { artist: true }
-    });
-    res.json(songs);
+    })
+    res.json(songs)
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    res.status(500).json({ error: error.message })
   }
-});
+})
 
-// Podcasts routes
 app.get('/api/podcasts', async (req, res) => {
   try {
-    const podcasts = await prisma.podcast.findMany();
-    res.json(podcasts);
+    const podcasts = await prisma.podcast.findMany()
+    res.json(podcasts)
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    res.status(500).json({ error: error.message })
   }
-});
+})
 
 app.get('/api/podcasts/:category', async (req, res) => {
   try {
-    const { category } = req.params;
+    const { category } = req.params
     const podcasts = await prisma.podcast.findMany({
       where: { category }
-    });
-    res.json(podcasts);
+    })
+    res.json(podcasts)
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    res.status(500).json({ error: error.message })
   }
-});
+})
 
-// Playlists routes
 app.get('/api/playlists', async (req, res) => {
   try {
     const playlists = await prisma.playlist.findMany({
-      include: { songs: true, user: true }
-    });
-    res.json(playlists);
+      include: {
+        user: true,
+        songs: {
+          include: {
+            artist: true
+          }
+        }
+      }
+    })
+    res.json(playlists)
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    res.status(500).json({ error: error.message })
   }
-});
+})
 
 app.get('/api/user/:userId/playlists', async (req, res) => {
   try {
-    const { userId } = req.params;
+    const { userId } = req.params
     const playlists = await prisma.playlist.findMany({
       where: { userId: parseInt(userId) },
-      include: { songs: true }
-    });
-    res.json(playlists);
+      include: {
+        songs: {
+          include: {
+            artist: true
+          }
+        }
+      }
+    })
+    res.json(playlists)
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    res.status(500).json({ error: error.message })
   }
-});
+})
 
 app.post('/api/playlists', async (req, res) => {
   try {
-    const { name, description, userId } = req.body;
+    const { name, description, userId } = req.body
     const playlist = await prisma.playlist.create({
       data: { name, description, userId: userId || 1 }
-    });
-    res.status(201).json(playlist);
+    })
+    res.status(201).json(playlist)
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    res.status(500).json({ error: error.message })
   }
-});
+})
 
 app.post('/api/playlists/:id/songs', async (req, res) => {
   try {
-    const { id } = req.params;
-    const { songId } = req.body;
-    
+    const { id } = req.params
+    const { songId } = req.body
+
     const updatedPlaylist = await prisma.playlist.update({
       where: { id: parseInt(id) },
       data: {
@@ -149,34 +179,55 @@ app.post('/api/playlists/:id/songs', async (req, res) => {
           connect: { id: parseInt(songId) }
         }
       },
-      include: { songs: true }
-    });
-    
-    res.json(updatedPlaylist);
+      include: {
+        songs: {
+          include: {
+            artist: true
+          }
+        }
+      }
+    })
+
+    res.json(updatedPlaylist)
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    res.status(500).json({ error: error.message })
   }
-});
+})
 
 app.delete('/api/playlists/:id', async (req, res) => {
   try {
-    const { id } = req.params;
+    const { id } = req.params
     await prisma.playlist.delete({
       where: { id: parseInt(id) }
-    });
-    res.json({ message: 'Playlist deleted' });
+    })
+    res.json({ message: 'Playlist deleted' })
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    res.status(500).json({ error: error.message })
   }
-});
+})
 
-// Start server
+app.post('/api/history', async (req, res) => {
+  try {
+    const { userId, songId } = req.body
+
+    const entry = await prisma.listeningHistory.create({
+      data: {
+        userId: Number(userId),
+        songId: Number(songId)
+      }
+    })
+
+    res.status(201).json(entry)
+  } catch (error) {
+    res.status(500).json({ error: error.message })
+  }
+})
+
 app.listen(PORT, () => {
-  console.log(`🎵 Spotify App Server running on http://localhost:${PORT}`);
-});
+  console.log(`Spotify App Server running on http://localhost:${PORT}`)
+})
 
-// Graceful shutdown
 process.on('SIGINT', async () => {
-  await prisma.$disconnect();
-  process.exit(0);
-});
+  await prisma.$disconnect()
+  process.exit(0)
+})
