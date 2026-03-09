@@ -1,45 +1,82 @@
 <template>
   <div class="app">
+    <Sidebar
+      :playlists="playlists"
+      :selectedPlaylist="selectedPlaylist"
+      @playlist-select="selectPlaylist"
+      @playlist-create="createPlaylist"
+      :open="mobileMenu"
+      @close="mobileMenu = false"
+    />
 
-    <aside class="sidebar" :class="{ open: mobileMenu }">
-      <div class="logo">Spotify</div>
-
-      <div class="nav">
-        <button class="nav-btn active">Home</button>
-        <button class="nav-btn">Search</button>
-        <button class="nav-btn">Your Library</button>
-      </div>
-    </aside>
-
-    <div class="main">
-
+    <div class="main" @click="mobileMenu=false">
       <header class="topbar">
-        <button class="mobile-menu" @click="mobileMenu = !mobileMenu">☰</button>
-        <input class="search" placeholder="What do you want to listen to?" />
+        <button class="mobile-menu" @click.stop="mobileMenu = !mobileMenu">☰</button>
+        <input class="search" placeholder="Search playlists, songs, podcasts..." />
       </header>
 
-      <main class="content">
-        <HomeView @play="play" />
-      </main>
+      <div class="tabs">
+        <button
+          v-for="tab in tabs"
+          :key="tab"
+          @click="activeTab = tab"
+          :class="{ active: activeTab === tab }"
+        >
+          {{ tab }}
+        </button>
+      </div>
 
+    <main class="content">
+  <div v-if="activeTab === 'All'" class="placeholder">
+    <p>Songs and podcasts will be shown here</p>
+  </div>
+
+  <div v-if="activeTab === 'Music'" class="placeholder">
+    <p>No songs yet</p>
+  </div>
+
+  <div v-if="activeTab === 'Podcasts'" class="placeholder">
+    <p>No podcasts yet</p>
+  </div>
+</main>
     </div>
 
     <PlayerBar :song="currentSong" />
-
   </div>
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
+import Sidebar from './components/Sidebar.vue'
 import HomeView from './views/HomeView.vue'
+import SongsView from './views/SongsView.vue'
+import PlaylistView from './views/PlaylistView.vue'
 import PlayerBar from './components/PlayerBar.vue'
+import { api } from './api'
 
 const currentSong = ref(null)
 const mobileMenu = ref(false)
+const playlists = ref([])
+const selectedPlaylist = ref(null)
+const tabs = ['All', 'Music', 'Podcasts']
+const activeTab = ref('All')
 
-function play(song){
+function play(song) {
   currentSong.value = song
 }
+
+function selectPlaylist(pl) {
+  selectedPlaylist.value = pl
+}
+
+function createPlaylist(name) {
+  playlists.value.push({ id: Date.now(), name, songs: [] })
+}
+
+onMounted(async () => {
+  const res = await api.get('/playlists')
+  playlists.value = res.data
+})
 </script>
 
 <style>
@@ -68,43 +105,7 @@ html,body,#app{
   height:100vh;
 }
 
-.sidebar{
-  background:var(--bg-sidebar);
-  color:var(--text-main);
-  padding:18px 12px;
-}
-
-.logo{
-  font-weight:700;
-  font-size:20px;
-  margin-bottom:22px;
-}
-
-.nav{
-  display:flex;
-  flex-direction:column;
-  gap:6px;
-}
-
-.nav-btn{
-  background:none;
-  border:none;
-  color:var(--text-sub);
-  text-align:left;
-  padding:10px 12px;
-  border-radius:6px;
-  font-size:14px;
-  cursor:pointer;
-}
-
-.nav-btn.active,
-.nav-btn:hover{
-  color:var(--text-main);
-  background:#1a1a1a;
-}
-
 .main{
-  background:linear-gradient(180deg,#1f1f1f 0%, #121212 180px);
   display:flex;
   flex-direction:column;
   overflow:hidden;
@@ -130,6 +131,29 @@ html,body,#app{
   outline:none;
 }
 
+.tabs{
+  display:flex;
+  gap:16px;
+  padding:12px 20px;
+  background:#181818;
+  justify-content:flex-start;
+}
+
+.tabs button{
+  background:none;
+  border:none;
+  color:var(--text-sub);
+  font-size:14px;
+  cursor:pointer;
+  padding:6px 12px;
+  border-radius:4px;
+}
+
+.tabs button.active{
+  color:white;
+  background:#1db954;
+}
+
 .content{
   flex:1;
   overflow:auto;
@@ -144,25 +168,10 @@ html,body,#app{
   font-size:22px;
 }
 
-@media (max-width: 900px){
+@media (max-width:900px){
   .app{
     grid-template-columns: 1fr;
   }
-
-  .sidebar{
-    position:fixed;
-    top:0;
-    left:-260px;
-    width:240px;
-    height:100%;
-    z-index:20;
-    transition:left .25s;
-  }
-
-  .sidebar.open{
-    left:0;
-  }
-
   .mobile-menu{
     display:block;
   }

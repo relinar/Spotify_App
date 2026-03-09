@@ -1,6 +1,8 @@
 import { createApp } from 'vue'
 import App from './App.vue'
 import 'bulma/css/bulma.css'
+import { router } from './Router'
 
-const app = createApp(App)
-app.mount('#app')
+createApp(App)
+  .use(router)
+  .mount('#app')
