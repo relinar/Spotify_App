@@ -33,7 +33,7 @@ spotify-app/
 │   │   ├── schema.prisma  # Database schema (models + relations)
 │   │   ├── seed.js        # Seed data script
 │   │   └── migrations/    # Generated migration SQL
-│   ├── .env              # environment variables (not committed)
+│   ├── .env               # Environment variables (not committed)
 │   └── package.json       # Backend dependencies & scripts
 │
 └── README.md              # ← you are here
@@ -54,84 +54,86 @@ spotify-app/
 
 ## 🛠️ Setup & Development
 
-1. **Backend dependencies**
+### 1. Backend dependencies
 
-   ```bash
-   cd server
-   npm install
-   ```
+```bash
+cd server
+npm install
+```
 
-2. **Environment configuration**
+### 2. Environment configuration
 
-   Copy `.env.example` to `.env` and adjust the connection string:
+Create `.env`:
 
-   ```ini
-   DATABASE_URL="mysql://<user>:<password>@localhost:3306/spotify"
-   PORT=3000
-   NODE_ENV=development
-   ```
+```ini
+DATABASE_URL="mysql://<user>:<password>@localhost:3306/spotify"
+PORT=3000
+NODE_ENV=development
+```
 
-   - `root:mysql` is the default used in this repo.
-   - Make sure the `spotify` database exists (Prisma will create tables).
+---
 
-3. **Generate Prisma client & migrate**
+### 3. Generate Prisma client & migrate
 
-   ```bash
-   npx prisma generate
-   npx prisma migrate dev --name init
-   ```
+```bash
+npx prisma generate
+npx prisma migrate dev --name init
+```
 
-   - Migrations live under `server/prisma/migrations/*` and can be viewed on GitHub.
+---
 
-4. **Seed the database**
+### 4. Seed the database
 
-   ```bash
-   npm run seed
-   ```
+```bash
+npm run seed
+```
 
-5. **Frontend dependencies**
+---
 
-   ```bash
-   cd ../client
-   npm install
-   ```
+### 5. Frontend dependencies
 
-6. **Start both servers**
+```bash
+cd ../client
+npm install
+```
 
-   - Terminal 1 (backend):
-     ```bash
-     cd server
-     npm run dev
-     ```
-   - Terminal 2 (frontend):
-     ```bash
-     cd client
-     npm run dev
-     ```
+---
 
-   Frontend: `http://localhost:5173`  →  Backend API: `http://localhost:3000`
+### 6. Start both servers
+
+**Backend:**
+```bash
+cd server
+npm run dev
+```
+
+**Frontend:**
+```bash
+cd client
+npm run dev
+```
+
+Frontend → http://localhost:5173  
+Backend API → http://localhost:3000  
 
 ---
 
 ## 🔗 API Overview
 
 ### Artists
-- `GET /api/artists` – list all artists with their songs
+- `GET /api/artists`
 
 ### Songs
-- `GET /api/songs` – list all songs, including artist data
+- `GET /api/songs`
 
 ### Playlists
-- `GET /api/playlists` – fetch user playlists with tracks
-- `POST /api/playlists` – create a new playlist
-- `POST /api/playlists/:id/songs` – add a track to a playlist
-
+- `GET /api/playlists`
+- `POST /api/playlists`
+- `POST /api/playlists/:id/songs`
 
 ---
 
 ## 🗃 Database Structure
-
-The schema below matches the MySQL database created by Prisma.
 
 ```prisma
 model User {
@@ -207,40 +209,32 @@ model ListeningHistory {
 }
 ```
 
-Migrations are stored in `server/prisma/migrations` – see the `20260216145528_init/migration.sql` file for the exact SQL.
-
 ---
 
 ## 📦 Seeded Data
 
-The database ships with a default account and sample records:
-
-- **User**: `user@spotify.com` (non‑premium)
-- **Artists**: Example musicians such as The Weeknd, Billie Eilish, Taylor Swift
-- **Songs**: A dozen tracks with durations/genres
-- **Playlists**: `Trending Now`, `Chill Vibes`
-
+- Default user
+- Sample artists
+- Sample songs
+- Sample playlists
 
 ---
 
 ## 🚀 Production Build
 
 ### Frontend
-
 ```bash
 cd client
 npm run build
 ```
 
 ### Backend
-
 ```bash
 cd server
 npm start
 ```
 
 ---
-
 
 ## 👩‍💻 Author
 
